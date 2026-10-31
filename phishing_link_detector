@@ -47,7 +47,7 @@ def check_fake(domain):
         if ch in FAKE_LETTERS:
             score = 50
             print("- 가짜 글자", ch, "(번호", ord(ch), ") → 진짜는", FAKE_LETTERS[ch])
-        elif ord(ch) > 127 and not ("가" <= ch <= "힣" or "\u3131" <= ch <= "\u318e" or "\u1100" <= ch <= "\u11ff"):
+        elif ord(ch) > 127 and not ("가" <= ch <= "힣"):
             score = 50
             print("- 영어도 한글도 아닌 글자", ch, "(번호", ord(ch), ")")
     return score
