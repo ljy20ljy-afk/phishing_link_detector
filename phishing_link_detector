@@ -1,0 +1,89 @@
+ # 피싱 링크 검사기 (3단계)
+# 1단계 기본 검사  2단계 가짜 글자  3단계 유명 사이트 흉내
+ 
+# 모양이 똑같은 가짜 글자 (가짜 : 진짜)
+FAKE_LETTERS = {"а": "a", "е": "e", "о": "o", "с": "c", "р": "p"}
+ 
+# 글자 대신 쓰는 숫자 (숫자 : 닮은 글자)
+NUMBER_LETTERS = {"0": "o", "1": "l", "3": "e"}
+ 
+SUSPICIOUS_WORDS = ["login", "secure", "account"]
+ 
+# 유명 사이트 이름 : 진짜 주소
+REAL_SITES = {"naver": "naver.com", "google": "google.com", "kakao": "kakao.com", "apple": "apple.com"}
+ 
+ 
+# 진짜 접속 주소 뽑기
+def get_domain(url):
+    if "://" in url:
+        url = url.split("://")[1]
+    domain = url.split("/")[0]
+    if "@" in domain:
+        domain = domain.split("@")[-1]
+    return domain
+ 
+ 
+# 1단계: 기본 검사
+def check_basic(url, domain):
+    score = 0
+    if not url.startswith("https://"):
+        score = score + 20
+        print("- https로 시작하지 않아요 (+20)")
+    if "@" in url:
+        score = score + 30
+        print("- @가 있어요. 실제 접속 주소는", domain, "(+30)")
+    for word in SUSPICIOUS_WORDS:
+        if word in domain:
+            score = score + 20
+            print("- 의심 단어", word, "가 있어요 (+20)")
+            break
+    return score
+ 
+ 
+# 2단계: 가짜 글자 검사
+def check_fake(domain):
+    score = 0
+    for ch in domain:
+        if ch in FAKE_LETTERS:
+            score = 50
+            print("- 가짜 글자", ch, "(번호", ord(ch), ") → 진짜는", FAKE_LETTERS[ch])
+        elif ord(ch) > 127 and not ("가" <= ch <= "힣" or "\u3131" <= ch <= "\u318e" or "\u1100" <= ch <= "\u11ff"):
+            score = 50
+            print("- 영어도 한글도 아닌 글자", ch, "(번호", ord(ch), ")")
+    return score
+ 
+ 
+# 3단계: 유명 사이트 흉내 검사
+def check_copy(domain):
+    changed = ""
+    for ch in domain:
+        if ch in NUMBER_LETTERS:
+            changed = changed + NUMBER_LETTERS[ch]
+        else:
+            changed = changed + ch
+ 
+    for name in REAL_SITES:
+        real = REAL_SITES[name]
+        if name in changed:
+            if domain == real or domain.endswith("." + real):
+                return 0
+            print("-", name, "을(를) 흉내 낸 주소예요. 진짜 주소는", real, "(+40)")
+            return 40
+    return 0
+ 
+ 
+# ---- 프로그램 시작 ----
+url = input("검사할 주소를 입력하세요: ").strip().lower()
+domain = get_domain(url)
+print("검사한 도메인:", domain)
+ 
+total = check_basic(url, domain) + check_fake(domain) + check_copy(domain)
+print("위험 점수:", total)
+ 
+if total >= 50:
+    print("결과: 위험! 링크를 누르지 마세요.")
+elif total >= 20:
+    print("결과: 주의가 필요해요.")
+else:
+    print("결과: 큰 문제는 없어요. (100% 안전하다는 뜻은 아니에요)")
+
